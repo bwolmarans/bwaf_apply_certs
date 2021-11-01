@@ -1,0 +1,4 @@
+bwaf_url,service_name,old_cert,new_cert
+https://waf.cudathon.com:8443,juiceshop,qqqq,qqqq
+https://waf.cudathon.com:8443,ssl1,aaaaa,aaaaa
+https://waf.cudathon.com:8443,ssl2,ffffff,ffffff
