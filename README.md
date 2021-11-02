@@ -1,4 +1,4 @@
-(bwaf) ubuntu@brett-jumpbox:~/bwaf_apply_cert$ cat certs2.csv
+cat certs2.csv
 bwaf_url,service_name,new_certificate,sni_certificate_list,sni_domain_list
 https://waf.cudathon.com:8443,ssl1,sni2,sni3,sni3.wolmarans.com
 https://waf.cudathon.com:8443,juiceshop,ffffff,sni1 sni2 sni3,sni1.1.com sni2.2.com sni3.3.com
