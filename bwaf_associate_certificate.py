@@ -43,10 +43,8 @@ import os
 #
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-#waf_login_username = getpass("BWAF Login Username:")
-#waf_login_password = getpass("BWAF Login Password:")
-waf_login_username = "admin"
-waf_login_password = "Hello123!"
+waf_login_username = getpass("BWAF Login Username:")
+waf_login_password = getpass("BWAF Login Password:")
 waf_urls = []
 service_names = []
 new_certs = []
