@@ -21,4 +21,4 @@ writing out system state including deltas (if any) to file bwaf_changes_certs2.c
 bwaf_url,service_name,old_cert,new_cert,enable_sni,sni_cert_str,sni_domain_str
 https://waf.cudathon.com:8443,ssl1,sni2,sni2,Yes,"sni3","sni3.wolmarans.com"
 https://waf.cudathon.com:8443,juiceshop,sni1,ffffff,Yes,"sni1","sni2","sni3","sni1.1.com","sni2.2.com","sni3.3.com"
-https://waf.cudathon.com:8443,ssl2,ffffff,sni1,No,,
+https://waf.cudathon.com:8443,ssl2,ffffff,sni1,No,, 
