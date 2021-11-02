@@ -119,6 +119,7 @@ for waf_url, service_name, new_cert, sni_cert, sni_domain in zip(waf_urls, servi
 
 new_csv_file = 'bwaf_changes_' + csv_filename + "_" + str(datetime.now().strftime('%Y_%m_%d_%H_%M_%S')) + '.csv'
 csv_file_full = new_csv_file
+
 print("")
 print("writing out system state including deltas (if any) to file " + csv_file_full)
 f = open(csv_file_full, "w")
