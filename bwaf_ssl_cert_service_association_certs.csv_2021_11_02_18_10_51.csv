@@ -1,0 +1,4 @@
+bwaf_url,service_name,old_cert,new_cert,enable_sni,sni_cert_str,sni_domain_str
+https://waf.cudathon.com:8443,ssl2,qqqq,sni1,Yes,"sni2","sni3","sni2.wolmarans.com","sni3.wolmarans.com"
+https://waf.cudathon.com:8443,ssl2,sni1,qqqq,No,,
+https://waf.cudathon.com:8443,juiceshop,aaaaa,aaaaa,No,,
