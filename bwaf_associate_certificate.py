@@ -37,10 +37,6 @@ from getpass import getpass
 from datetime import datetime
 import os
 
-# Working curl example: 
-# curl -K token.txt -X PUT -k https://waf.cudathon.com:8443/restapi/v3.2/services/juiceshop/ssl-security -H Content-Type:application/json -d '{"certificate":"qqqq"}'
-# {"id":"juiceshop","token":"eyJ1c2VyIjoiYWRtaW4iLCJldCI6IjE2MzU3NTgxMDYiLCJwYXNzd29yZCI6IjU2YWRiNWM3MTMw\nNjcxYTgzZDE4M2U2NmE2YjQ5NGM4In0=\n","msg":"Configuration updated"}
-#
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 waf_login_username = getpass("BWAF Login Username:")
@@ -54,7 +50,6 @@ csv_filename = str(sys.argv[1])
 f = open(csv_filename,"r")
 content = f.read()
 rows=content.splitlines()
-#rows=rows.split(",")
 f.close
 for row2 in rows[1:]:
     row = row2.split(",")
@@ -63,8 +58,6 @@ for row2 in rows[1:]:
     new_certs.append(row[2].strip())
     sni_certs.append(row[3].strip())
     sni_domains.append(row[4].strip())
-#curl -K token.txt -X PUT -k https://waf.cudathon.com:8443/restapi/v3.2/services/ssl1/ssl-security -H Content-Type:application/json -d '{"certificate":"sni1","sni-certificate":["sni2","sni3"],"domain":["sni2.wolmarans.com","sni3.wolmarans.com"]}'
-#{"msg":"Configuration updated","token":"eyJldCI6IjE2MzU5MDQ4OTUiLCJwYXNzd29yZCI6IjI1Mzk5Y2E5ZmRlMWI2OTFmOTZkZWU0ODM1\nOGVmZmVjIiwidXNlciI6ImFkbWluIn0=\n","id":"ssl1"}
 rr = 1
 new_lines = []
 for waf_url, service_name, new_cert, sni_cert, sni_domain in zip(waf_urls, service_names, new_certs, sni_certs, sni_domains):
@@ -75,12 +68,18 @@ for waf_url, service_name, new_cert, sni_cert, sni_domain in zip(waf_urls, servi
     hhh = { 'Content-Type': 'application/json'}
     post_data = json.dumps({ 'username': waf_login_username, 'password': waf_login_password })
     r = requests.post(waf_rest_url + 'login', headers=hhh, data=post_data, verify=False )
+    r.raise_for_status()
+
     token = json.loads(r.text)['token']
     token = token.encode('ascii')
     b64token = base64.b64encode(token)
     b64token = b64token.decode('ascii')
     hhh={"Content-Type": "application/json", "Authorization": "Basic " + b64token}
     r = requests.get(waf_rest_url + "services/" + service_name + "/ssl-security", headers=hhh, verify=False)
+    if r.status_code > 299:
+        print(r.text)
+        quit()
+
     j = r.json()
     existing_cert = j['data'][service_name]['SSL Security']['certificate']
     existing_sni = j['data'][service_name]['SSL Security']['enable-sni']
@@ -95,17 +94,14 @@ for waf_url, service_name, new_cert, sni_cert, sni_domain in zip(waf_urls, servi
         sni_domain_quoted.append('"' + dom + '"')
     if (len(sni_cert)) > 0:
         enable_sni = "Yes"
-    print("row " + str(rr) + " of " + csv_filename + " bwaf: " + waf_url + " service: " + service_name + " existing cert: " + existing_cert + " new cert: " + new_cert + " enable sni: " + enable_sni, end='')
+    print("row " + str(rr) + " of " + csv_filename + " bwaf: " + waf_url + " service: " + service_name + " existing cert: " + existing_cert + " new cert: " + new_cert + " enable sni: " + enable_sni)
 
     sni_cert_str  = ','.join([str(item) for item in sni_cert_quoted])
     sni_domain_str = ','.join([str(item) for item in sni_domain_quoted])
-    #sni_cert_str = '[' + sni_cert_str + ']'
-    #sni_domain_str = '[' + sni_domain_str + ']'
     if existing_cert != new_cert or existing_sni != enable_sni:
-        print(" --> making changes:")    
-        #"sni-certificate":["sni2","sni3"],"domain":["sni1.wolmarans.com","sni2.wolmarans.com","sni3.wolmarans.com"]}'
-        #print("    changing cert from " + existing_cert + " to: " + new_cert + " sni: " + enable_sni + " sni certs: " + sni_cert_str + " sni domains: " + sni_domain_str )
-        print("    " + service_name + ' {"enable-sni":"' + enable_sni + '","certificate":"' + new_cert + '","sni-certificate":[' + sni_cert_str + '],"domain":[' + sni_domain_str + ']}')
+        #print("   --> changes required as follows:")    
+        print("    changing cert from " + existing_cert + " to: " + new_cert + " sni: " + enable_sni + " sni certs: " + sni_cert_str + " sni domains: " + sni_domain_str )
+        #print("    " + service_name + ' {"enable-sni":"' + enable_sni + '","certificate":"' + new_cert + '","sni-certificate":[' + sni_cert_str + '],"domain":[' + sni_domain_str + ']}')
         r = requests.put(waf_rest_url + "services/" + service_name + "/ssl-security", headers=hhh, data='{"enable-sni":"' + enable_sni + '","certificate":"' + new_cert + '","sni-certificate":[' + sni_cert_str + '],"domain":[' + sni_domain_str + ']}', verify=False)
         t = r.text
         try:
@@ -116,16 +112,15 @@ for waf_url, service_name, new_cert, sni_cert, sni_domain in zip(waf_urls, servi
         j = r.json()
         new_existing_cert = j['data'][service_name]['SSL Security']['certificate']
         print("    new current certificate: " + new_existing_cert )
-    else:
-        print(" <--- no changes required")
 
     new_lines.append(waf_url + ',' + service_name + ',' + existing_cert + ',' + new_existing_cert + ',' + enable_sni + ',' + sni_cert_str + ',' + sni_domain_str)
     rr += 1
 
 
-new_csv_file = 'bwaf_ssl_cert_service_association_' + csv_filename + "_" + str(datetime.now().strftime('%Y_%m_%d_%H_%M_%S')) + '.csv'
+new_csv_file = 'bwaf_changes_' + csv_filename + "_" + str(datetime.now().strftime('%Y_%m_%d_%H_%M_%S')) + '.csv'
 csv_file_full = new_csv_file
-print("writing out changes to file " + csv_file_full)
+print("")
+print("writing out system state including deltas (if any) to file " + csv_file_full)
 f = open(csv_file_full, "w")
 f.write("bwaf_url,service_name,old_cert,new_cert,enable_sni,sni_cert_str,sni_domain_str\n")
 for new_line in new_lines:
