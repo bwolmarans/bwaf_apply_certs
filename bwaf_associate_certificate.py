@@ -37,18 +37,12 @@ import os
 #
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-#waf_url = str(sys.argv[1])
-#waf_login_username = str(sys.argv[1])
 waf_login_username = getpass("BWAF Login Username:")
-#waf_login_password = str(sys.argv[3])
 waf_login_password = getpass("BWAF Login Password:")
-#service_names = str(sys.argv[3]).split(',')
 waf_urls = []
 service_names = []
 new_certs = []
-#cert_names = str(sys.argv[4]).split(',')
 csv_filename = str(sys.argv[1])
-#output_path = str(sys.argv[2])
 with open(csv_filename, newline='') as csvfile:
     rows = csv.reader(csvfile, delimiter=',')
     next(rows)
@@ -64,19 +58,15 @@ for waf_url, service_name, new_cert in zip(waf_urls, service_names, new_certs):
     waf_rest_url=waf_url + "/restapi/v3.2/"
     hhh = { 'Content-Type': 'application/json'}
     post_data = json.dumps({ 'username': waf_login_username, 'password': waf_login_password })
-    #print("POST " + waf_rest_url + 'login')
     r = requests.post(waf_rest_url + 'login', headers=hhh, data=post_data, verify=False )
     token = json.loads(r.text)['token']
     token = token.encode('ascii')
     b64token = base64.b64encode(token)
     b64token = b64token.decode('ascii')
     hhh={"Content-Type": "application/json", "Authorization": "Basic " + b64token}
-    #print("service: " + service_name)
-    #print("    desired certificate: " + new_cert )
     r = requests.get(waf_rest_url + "services/" + service_name + "/ssl-security", headers=hhh, verify=False)
     j = r.json()
     existing_cert = j['data'][service_name]['SSL Security']['certificate']
-    #print("    current certificate :" + existing_cert)
     print("Processing row " + str(rr) + " from file " + csv_filename + " bwaf: " + waf_url + " service: " + service_name + " existing cert: " + existing_cert + " new cert: " + new_cert)
     if existing_cert != new_cert:
         print("    changing certificate from " + existing_cert + " to: " + new_cert)
@@ -88,17 +78,14 @@ for waf_url, service_name, new_cert in zip(waf_urls, service_names, new_certs):
         new_existing_cert = j['data'][service_name]['SSL Security']['certificate']
         print("    new current certificate: " + new_existing_cert )
 
-    #new_line = '"' + waf_url + '","' + service_name + '","' + cert_name + '","' + existing_cert + '"'
     new_lines.append(waf_url + ',' + service_name + ',' + existing_cert + ',' + new_existing_cert)
     rr += 1
-#file_path = os.getcwd()
-#file_path = output_path
+
 new_csv_file = 'bwaf_ssl_cert_service_association_' + csv_filename + "_" + str(datetime.now().strftime('%Y_%m_%d_%H_%M_%S')) + '.csv'
 csv_file_full = new_csv_file
 print("writing out changes to file " + csv_file_full)
 f = open(csv_file_full, "w")
 f.write("bwaf_url,service_name,old_cert,new_cert\n")
 for new_line in new_lines:
-    #print(new_line)
     f.write(new_line + "\n")
 f.close
